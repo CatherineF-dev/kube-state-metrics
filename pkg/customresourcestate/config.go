@@ -120,37 +120,19 @@ func (l Labels) Merge(other Labels) Labels {
 	}
 }
 
+type JsonPath string
+
 // Generator describes a unique metric name.
 type Generator struct {
 	// Name of the metric. Subject to prefixing based on the configuration of the Resource.
 	Name string `yaml:"name" json:"name"`
 	// Help text for the metric.
-	Help string `yaml:"help" json:"help"`
-	// Each targets a value or values from the resource.
-	Each Metric `yaml:"each" json:"each"`
+	Help     string     `yaml:"help" json:"help"`
+	Values   []string   `yaml:"values" json:"values"`
+	CRLabels []JsonPath `yaml:"crlabels" json:"crlabels"`
 
-	// Labels are added to all metrics. Labels from Each will overwrite these if using the same key.
-	Labels `yaml:",inline" json:",inline"` // json will inline because it is already tagged
 	// ErrorLogV defines the verbosity threshold for errors logged for this metric. Must be non-zero to override the resource setting.
 	ErrorLogV klog.Level `yaml:"errorLogV" json:"errorLogV"`
-}
-
-// Metric defines a metric to expose.
-// +union
-type Metric struct {
-	// Type defines the type of the metric.
-	// +unionDiscriminator
-	Type MetricType `yaml:"type" json:"type"`
-
-	// Gauge defines a gauge metric.
-	// +optional
-	Gauge *MetricGauge `yaml:"gauge" json:"gauge"`
-	// StateSet defines a state set metric.
-	// +optional
-	StateSet *MetricStateSet `yaml:"stateSet" json:"stateSet"`
-	// Info defines an info metric.
-	// +optional
-	Info *MetricInfo `yaml:"info" json:"info"`
 }
 
 // ConfigDecoder is for use with FromConfig.

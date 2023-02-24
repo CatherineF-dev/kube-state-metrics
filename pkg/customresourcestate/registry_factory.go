@@ -17,7 +17,6 @@ limitations under the License.
 package customresourcestate
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"sort"
@@ -67,29 +66,23 @@ func compileCommon(c MetricMeta) (*compiledCommon, error) {
 }
 
 func compileFamily(f Generator, resource Resource) (*compiledFamily, error) {
-	labels := resource.Labels.Merge(f.Labels)
+	// labels := resource.Labels.Merge(f.Labels)
+	labels := resource.Labels
 
-	metric, err := newCompiledMetric(f.Each)
-	if err != nil {
-		return nil, fmt.Errorf("compiling metric: %w", err)
-	}
-
-	labelsFromPath, err := compilePaths(labels.LabelsFromPath)
-	if err != nil {
-		return nil, fmt.Errorf("labelsFromPath: %w", err)
-	}
+	// labelsFromPath, err := compilePaths(labels.LabelsFromPath)
 
 	errorLogV := f.ErrorLogV
 	if errorLogV == 0 {
 		errorLogV = resource.ErrorLogV
 	}
 	return &compiledFamily{
-		Name:          fullName(resource, f),
-		ErrorLogV:     errorLogV,
-		Help:          f.Help,
-		Each:          metric,
-		Labels:        labels.CommonLabels,
-		LabelFromPath: labelsFromPath,
+		Name:      fullName(resource, f),
+		ErrorLogV: errorLogV,
+		Help:      f.Help,
+		// Each:          metric,
+		Labels:   labels.CommonLabels,
+		CRLabels: f.CRLabels,
+		Values:   f.Values,
 	}, nil
 }
 
@@ -141,65 +134,6 @@ type compiledMetric interface {
 	Path() valuePath
 	LabelFromPath() map[string]valuePath
 	Type() metric.Type
-}
-
-// newCompiledMetric returns a compiledMetric depending on the given metric type.
-func newCompiledMetric(m Metric) (compiledMetric, error) {
-	switch m.Type {
-	case MetricTypeGauge:
-		if m.Gauge == nil {
-			return nil, errors.New("expected each.gauge to not be nil")
-		}
-		cc, err := compileCommon(m.Gauge.MetricMeta)
-		cc.t = metric.Gauge
-		if err != nil {
-			return nil, fmt.Errorf("each.gauge: %w", err)
-		}
-		valueFromPath, err := compilePath(m.Gauge.ValueFrom)
-		if err != nil {
-			return nil, fmt.Errorf("each.gauge.valueFrom: %w", err)
-		}
-		return &compiledGauge{
-			compiledCommon: *cc,
-			ValueFrom:      valueFromPath,
-			NilIsZero:      m.Gauge.NilIsZero,
-			labelFromKey:   m.Gauge.LabelFromKey,
-		}, nil
-	case MetricTypeInfo:
-		if m.Info == nil {
-			return nil, errors.New("expected each.info to not be nil")
-		}
-		cc, err := compileCommon(m.Info.MetricMeta)
-		cc.t = metric.Info
-		if err != nil {
-			return nil, fmt.Errorf("each.info: %w", err)
-		}
-		return &compiledInfo{
-			compiledCommon: *cc,
-			labelFromKey:   m.Info.LabelFromKey,
-		}, nil
-	case MetricTypeStateSet:
-		if m.StateSet == nil {
-			return nil, errors.New("expected each.stateSet to not be nil")
-		}
-		cc, err := compileCommon(m.StateSet.MetricMeta)
-		cc.t = metric.StateSet
-		if err != nil {
-			return nil, fmt.Errorf("each.stateSet: %w", err)
-		}
-		valueFromPath, err := compilePath(m.StateSet.ValueFrom)
-		if err != nil {
-			return nil, fmt.Errorf("each.gauge.valueFrom: %w", err)
-		}
-		return &compiledStateSet{
-			compiledCommon: *cc,
-			List:           m.StateSet.List,
-			LabelName:      m.StateSet.LabelName,
-			ValueFrom:      valueFromPath,
-		}, nil
-	default:
-		return nil, fmt.Errorf("unknown metric type %s", m.Type)
-	}
 }
 
 type compiledGauge struct {
@@ -478,6 +412,8 @@ type compiledFamily struct {
 	Labels        map[string]string
 	LabelFromPath map[string]valuePath
 	ErrorLogV     klog.Level
+	Values        []string
+	CRLabels      []JsonPath
 }
 
 func (f compiledFamily) BaseLabels(obj map[string]interface{}) map[string]string {
@@ -638,9 +574,13 @@ func famGen(f compiledFamily) generator.FamilyGenerator {
 	}
 }
 
+// update here
 // generate generates the metrics for a custom resource.
 func generate(u *unstructured.Unstructured, f compiledFamily, errLog klog.Verbose) *metric.Family {
 	klog.V(10).InfoS("Checked", "compiledFamilyName", f.Name, "unstructuredName", u.GetName())
+	// crLabels := f.CRLabels
+	// crVaules := f.Values
+
 	var metrics []*metric.Metric
 	baseLabels := f.BaseLabels(u.Object)
 

@@ -42,30 +42,12 @@ func TestNewCustomResourceMetrics(t *testing.T) {
 					Version: "v1",
 					Kind:    "Deployment",
 				},
-				Labels: Labels{
-					LabelsFromPath: map[string][]string{
-						"name": {"metadata", "name"},
-					},
-					CommonLabels: map[string]string{
-						"hello": "world",
-					},
-				},
 				Metrics: []Generator{
 					{
-						Name: "test_metrics",
-						Help: "metrics for testing",
-						Each: Metric{
-							Type: MetricTypeInfo,
-							Info: &MetricInfo{
-								MetricMeta: MetricMeta{
-									Path: []string{
-										"metadata",
-										"annotations",
-									},
-								},
-								LabelFromKey: "test",
-							},
-						},
+						Name:     "test_metrics",
+						Help:     "metrics for testing",
+						CRLabels: []JsonPath{"a", "b"},
+						Values:   []string{"1", "2"},
 					},
 				},
 			},
@@ -116,18 +98,18 @@ func TestNewCustomResourceMetrics(t *testing.T) {
 					{
 						Name: "test_metrics",
 						Help: "metrics for testing",
-						Each: Metric{
-							Type: MetricTypeInfo,
-							Info: &MetricInfo{
-								MetricMeta: MetricMeta{
-									Path: []string{
-										"metadata",
-										"annotations",
-									},
-								},
-								LabelFromKey: "test",
-							},
-						},
+						// Each: Metric{
+						// 	Type: MetricTypeInfo,
+						// 	Info: &MetricInfo{
+						// 		MetricMeta: MetricMeta{
+						// 			Path: []string{
+						// 				"metadata",
+						// 				"annotations",
+						// 			},
+						// 		},
+						// 		LabelFromKey: "test",
+						// 	},
+						// },
 					},
 				},
 				MetricNamePrefix: pointer.String("apps_deployment"),
@@ -179,18 +161,18 @@ func TestNewCustomResourceMetrics(t *testing.T) {
 					{
 						Name: "test_metrics",
 						Help: "metrics for testing",
-						Each: Metric{
-							Type: MetricTypeInfo,
-							Info: &MetricInfo{
-								MetricMeta: MetricMeta{
-									Path: []string{
-										"metadata",
-										"annotations",
-									},
-								},
-								LabelFromKey: "test",
-							},
-						},
+						// Each: Metric{
+						// 	Type: MetricTypeInfo,
+						// 	Info: &MetricInfo{
+						// 		MetricMeta: MetricMeta{
+						// 			Path: []string{
+						// 				"metadata",
+						// 				"annotations",
+						// 			},
+						// 		},
+						// 		LabelFromKey: "test",
+						// 	},
+						// },
 					},
 				},
 				MetricNamePrefix: pointer.String("apps_deployment"),
