@@ -25,6 +25,7 @@ import (
 	"strings"
 	"time"
 
+	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/klog/v2"
 
@@ -642,6 +643,14 @@ func famGen(f compiledFamily) generator.FamilyGenerator {
 func generate(u *unstructured.Unstructured, f compiledFamily, errLog klog.Verbose) *metric.Family {
 	klog.V(10).InfoS("Checked", "compiledFamilyName", f.Name, "unstructuredName", u.GetName())
 	var metrics []*metric.Metric
+	// Test convert unstructed to yaml
+	yamlData, err := yaml.Marshal(u.Object)
+	if err != nil {
+		klog.InfoS(fmt.Sprintf("Error marshalling to YAML: %v\n", err))
+	} else {
+		klog.InfoS(fmt.Sprintf("## yamlData %v", string(yamlData)))
+	}
+
 	baseLabels := f.BaseLabels(u.Object)
 
 	values, errors := scrapeValuesFor(f.Each, u.Object)
