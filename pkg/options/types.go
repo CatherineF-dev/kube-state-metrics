@@ -18,7 +18,6 @@ package options
 
 import (
 	"errors"
-	"regexp"
 	"sort"
 	"strings"
 
@@ -145,11 +144,11 @@ func (n *NodeType) GetNodeFieldSelector() string {
 		klog.InfoS("Using node type is nil")
 		return EmptyFieldSelector()
 	}
-	pattern := "[^a-zA-Z0-9_,-]+"
-	re := regexp.MustCompile(pattern)
-	result := re.ReplaceAllString(n.String(), "")
-	klog.InfoS("Using node type", "node", result)
-	return fields.OneTermEqualSelector("spec.nodeName", result).String()
+	nodeName := n.String()
+	if nodeName == "" {
+		return "spec.nodeName="
+	}
+	return fields.OneTermEqualSelector("spec.nodeName", nodeName).String()
 
 }
 
